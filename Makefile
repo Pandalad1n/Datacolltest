@@ -1,4 +1,5 @@
 IMAGE = datacoll
+CONTAINER = datacoll
 DB_PATH = /var/data/sitedb.db
 
 start: build worker
@@ -9,15 +10,19 @@ build:
 
 .PHONY: worker
 worker:
+	mkdir ./.log/ || true
+	touch ./.log/cron.log
 	docker run \
 		-v `pwd`/.data:/var/data \
+		-v `pwd`/.log/cron.log:/var/log/cron.log \
+		-d \
+		--name $(CONTAINER) \
 		--rm \
-		-e DB_PATH=$(DB_PATH) \
 		$(IMAGE)
 
 .PHONY: stop
 stop:
-	docker stop
+	docker stop $(CONTAINER)
 
 .PHONY: dbshell
 dbshell:
