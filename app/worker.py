@@ -2,8 +2,8 @@ import sqlite3
 import os
 import requests
 from bs4 import BeautifulSoup
-import datetime
-
+from datetime import datetime, timedelta
+from threading import Timer
 
 class Worker:
     def __init__(self):
@@ -19,23 +19,28 @@ class Worker:
         SELECT name_domain FROM Domain
         """)
         rows = cur.fetchall()
+        cur.execute("""
+        SELECT url FROM InfoSite
+        """)
+        old_rows = cur.fetchall()
         for r in rows:
-            site_info = requests.get(r[0])
-            soup = BeautifulSoup(site_info.text, features="html.parser")
-            url = r[0]
-            title = soup.find('title')
-            description = soup.find('description')
-            keywords = soup.find('keywords')
-            now = datetime.datetime.now()
-            sql = """
-            INSERT INTO InfoSite (url, title, description, keywords, date_of_operation) 
-            VALUES (?,?,?,?,?)
-            """
-            cur.execute(sql, (
-                url,
-                title.text if title else 'No title',
-                description.text if description else 'No description',
-                keywords.text if keywords else 'No keywords',
-                now
-            ))
+            if r not in old_rows:
+                site_info = requests.get(r[0])
+                soup = BeautifulSoup(site_info.text, features="html.parser")
+                url = r[0]
+                title = soup.find('title')
+                description = soup.find('description')
+                keywords = soup.find('keywords')
+                now = datetime.datetime.now()
+                sql = """
+                INSERT INTO InfoSite (url, title, description, keywords, date_of_operation)
+                VALUES (?,?,?,?,?)
+                """
+                cur.execute(sql, (
+                    url,
+                    title.text if title else 'No title',
+                    description.text if description else 'No description',
+                    keywords.text if keywords else 'No keywords',
+                    now
+                ))
         conn.commit()

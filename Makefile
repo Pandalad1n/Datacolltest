@@ -26,3 +26,7 @@ dbshell:
 .PHONY: initdb
 initdb:
 	docker run -v `pwd`/.data:/var/data -i --rm $(IMAGE) sqlite3 $(DB_PATH) < init.sql
+
+.PHONY: addsites
+addsites:
+	docker run -v `pwd`/.data:/var/data -i --rm $(IMAGE) sqlite3 $(DB_PATH) < add_new_sites.sql
