@@ -12,17 +12,6 @@ class Worker:
     def do(self):
         self.request()
 
-    def initdb(self):
-        conn = sqlite3.connect(os.environ['DB_PATH'])
-        cur = conn.cursor()
-        cur.execute("""
-        INSERT INTO Domain (name_domain) 
-        VALUES ('https://google.com'), 
-        ('https://yandex.ru/'), 
-        ('https://www.yahoo.com/')
-                """)
-        conn.commit()
-
     def request(self):
         conn = sqlite3.connect(os.environ['DB_PATH'])
         cur = conn.cursor()
@@ -38,8 +27,15 @@ class Worker:
             description = soup.find('description')
             keywords = soup.find('keywords')
             now = datetime.datetime.now()
-            print(url,
-                  title.text if title else 'No title',
-                  description.text if description else 'No description',
-                  keywords.text if keywords else 'No keywords',
-                  now)
+            sql = """
+            INSERT INTO InfoSite (url, title, description, keywords, date_of_operation) 
+            VALUES (?,?,?,?,?)
+            """
+            cur.execute(sql, (
+                url,
+                title.text if title else 'No title',
+                description.text if description else 'No description',
+                keywords.text if keywords else 'No keywords',
+                now
+            ))
+        conn.commit()
